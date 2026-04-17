@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ellipse Fade Mask Playground</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, sans-serif;
+    background: #1a1a1a;
+    color: #ccc;
+    padding: 2rem;
+    min-height: 100vh;
+  }
+
+  h1 { font-size: 16px; font-weight: 500; color: #fff; margin-bottom: 2rem; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 408px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* Controls */
+  .controls {
+    background: #242424;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+
+  .control-group { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  label { font-size: 13px; color: #aaa; min-width: 90px; flex-shrink: 0; }
+
+  input[type=range] {
+    flex: 1;
+    min-width: 0;
+    accent-color: #FF9D25;
+    height: 4px;
+  }
+
+  .val {
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    min-width: 42px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  input[type=color] {
+    width: 36px;
+    height: 28px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+    padding: 2px;
+    flex-shrink: 0;
+  }
+
+  .divider { border: none; border-top: 1px solid #333; }
+
+  /* Buttons */
+  .btn {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #333;
+    color: #ccc;
+  }
+  .btn:hover { background: #3e3e3e; }
+  .btn.primary { background: #FF9D25; color: #111; }
+  .btn.primary:hover { background: #ffb04f; }
+
+  /* Save row */
+  .save-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  #configName {
+    flex: 1;
+    min-width: 0;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #ccc;
+    font-size: 13px;
+    padding: 0.4rem 0.6rem;
+  }
+  #configName:focus { outline: 1px solid #FF9D25; border-color: #FF9D25; }
+  #configName::placeholder { color: #555; }
+
+  /* Saved list */
+  .saved-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .saved-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+  }
+  .saved-item:hover { border-color: #555; }
+
+  .saved-item-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: #ccc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .saved-item-name:hover { color: #fff; }
+
+  .saved-item-rename {
+    flex: 1;
+    min-width: 0;
+    background: #242424;
+    border: 1px solid #FF9D25;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 12px;
+    padding: 0.15rem 0.4rem;
+  }
+
+  .saved-item-icon {
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+  .saved-item-icon:hover { color: #aaa; }
+
+  .saved-item-del {
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+  .saved-item-del:hover { color: #e06c75; }
+
+  /* Preview */
+  .preview-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .preview-box {
+    background: #242424;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+
+  .preview-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #666;
+    margin-bottom: 1rem;
+  }
+
+  .canvas {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .canvas-exact {
+    overflow-x: auto;
+  }
+
+  .dots {
+    width: 100%;
+    height: 80px;
+  }
+
+  .dots-masked {
+    height: 80px;
+  }
+
+  /* Code block */
+  .code-wrap {
+    background: #141414;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+  }
+
+  pre {
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: #ccc;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .kw { color: #c792ea; }
+  .fn { color: #82aaff; }
+  .val-c { color: #f78c6c; }
+  .str { color: #c3e88d; }
+</style>
+</head>
+<body>
+
+<h1>Ellipse Fade Mask — Playground</h1>
+
+<div class="layout">
+
+  <div class="controls">
+
+    <div>
+      <div class="section-title">Dot grid</div>
+      <div class="control-group">
+        <div class="row">
+          <label>Dot size</label>
+          <input type="range" id="dotSize" min="3" max="20" value="7" step="1">
+          <span class="val" id="dotSizeVal">7px</span>
+        </div>
+        <div class="row">
+          <label>Gap</label>
+          <input type="range" id="gap" min="2" max="20" value="7" step="1">
+          <span class="val" id="gapVal">7px</span>
+        </div>
+        <div class="row">
+          <label>Color</label>
+          <input type="color" id="dotColor" value="#FF9D25">
+          <span class="val" id="dotColorVal">#FF9D25</span>
+        </div>
+        <div class="row">
+          <label>Rows</label>
+          <input type="range" id="rows" min="1" max="10" value="4" step="1">
+          <span class="val" id="rowsVal">4</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div>
+      <div class="section-title">Ellipse shape</div>
+      <div class="control-group">
+        <div class="row">
+          <label>Width (rx)</label>
+          <input type="range" id="rx" min="10" max="100" value="50" step="1">
+          <span class="val" id="rxVal">50%</span>
+        </div>
+        <div class="row">
+          <label>Height (ry)</label>
+          <input type="range" id="ry" min="10" max="100" value="80" step="1">
+          <span class="val" id="ryVal">80%</span>
+        </div>
+        <div class="row">
+          <label>Center X</label>
+          <input type="range" id="cx" min="0" max="100" value="50" step="1">
+          <span class="val" id="cxVal">50%</span>
+        </div>
+        <div class="row">
+          <label>Center Y</label>
+          <input type="range" id="cy" min="0" max="100" value="50" step="1">
+          <span class="val" id="cyVal">50%</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div>
+      <div class="section-title">Fade</div>
+      <div class="control-group">
+        <div class="row">
+          <label>Solid core</label>
+          <input type="range" id="fadeStart" min="0" max="100" value="40" step="1">
+          <span class="val" id="fadeStartVal">40%</span>
+        </div>
+        <div class="row">
+          <label>Fade end</label>
+          <input type="range" id="fadeEnd" min="0" max="100" value="100" step="1">
+          <span class="val" id="fadeEndVal">100%</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div>
+      <div class="section-title">Configs</div>
+      <div class="control-group">
+        <div class="save-row">
+          <input type="text" id="configName" placeholder="Name…" maxlength="40">
+          <button class="btn" id="saveConfigBtn">Save</button>
+        </div>
+        <div class="saved-list" id="savedList"></div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div>
+      <div class="section-title">Export</div>
+      <div class="control-group">
+        <div class="row">
+          <label>Screen width</label>
+          <input type="range" id="exportWidth" min="320" max="1920" value="1140" step="10">
+          <span class="val" id="exportWidthVal">1140px</span>
+        </div>
+        <button class="btn primary" id="exportBtn">Download HTML</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="preview-wrap">
+
+    <div class="preview-box">
+      <div class="preview-label">Original</div>
+      <div class="canvas">
+        <div class="dots" id="dotsOriginal"></div>
+      </div>
+    </div>
+
+    <div class="preview-box">
+      <div class="preview-label">With ellipse fade mask</div>
+      <div class="canvas canvas-exact">
+        <div class="dots-masked" id="dotsMasked"></div>
+      </div>
+    </div>
+
+    <div class="code-wrap">
+      <pre id="codeOut"></pre>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const ids = ['dotSize','gap','dotColor','rows','rx','ry','cx','cy','fadeStart','fadeEnd','exportWidth'];
+const els = {};
+ids.forEach(id => els[id] = document.getElementById(id));
+
+function v(id) { return els[id].value; }
+
+function currentConfig() {
+  return {
+    dotSize: parseInt(v('dotSize')),
+    gap: parseInt(v('gap')),
+    color: v('dotColor'),
+    rows: parseInt(v('rows')),
+    rx: parseInt(v('rx')),
+    ry: parseInt(v('ry')),
+    cx: parseInt(v('cx')),
+    cy: parseInt(v('cy')),
+    fadeStart: parseInt(v('fadeStart')),
+    fadeEnd: parseInt(v('fadeEnd')),
+    exportWidth: parseInt(v('exportWidth'))
+  };
+}
+
+function update() {
+  const { dotSize, gap, color, rows, rx, ry, cx, cy, fadeStart, fadeEnd } = currentConfig();
+  const step = dotSize + gap;
+  const height = rows * step - gap;
+
+  document.getElementById('dotSizeVal').textContent = dotSize + 'px';
+  document.getElementById('gapVal').textContent = gap + 'px';
+  document.getElementById('dotColorVal').textContent = color;
+  document.getElementById('rowsVal').textContent = rows;
+  document.getElementById('rxVal').textContent = rx + '%';
+  document.getElementById('ryVal').textContent = ry + '%';
+  document.getElementById('cxVal').textContent = cx + '%';
+  document.getElementById('cyVal').textContent = cy + '%';
+  document.getElementById('fadeStartVal').textContent = fadeStart + '%';
+  document.getElementById('fadeEndVal').textContent = fadeEnd + '%';
+  document.getElementById('exportWidthVal').textContent = v('exportWidth') + 'px';
+
+  const hGrad = `repeating-linear-gradient(to right, ${color} 0px, ${color} ${dotSize}px, transparent ${dotSize}px, transparent ${step}px)`;
+  const vGrad = `repeating-linear-gradient(to bottom, black 0px, black ${dotSize}px, transparent ${dotSize}px, transparent ${step}px)`;
+  const ellipseGrad = `radial-gradient(ellipse ${rx}% ${ry}% at ${cx}% ${cy}%, black ${fadeStart}%, transparent ${fadeEnd}%)`;
+
+  const orig = document.getElementById('dotsOriginal');
+  orig.style.height = height + 'px';
+  orig.style.backgroundImage = hGrad;
+  orig.style.backgroundSize = `${step}px ${step}px`;
+  orig.style.maskImage = vGrad;
+  orig.style.webkitMaskImage = vGrad;
+
+  const masked = document.getElementById('dotsMasked');
+  masked.style.width = parseInt(v('exportWidth')) + 'px';
+  masked.style.height = height + 'px';
+  masked.style.backgroundImage = hGrad;
+  masked.style.backgroundSize = `${step}px ${step}px`;
+  const combinedMask = `${vGrad}, ${ellipseGrad}`;
+  masked.style.maskImage = combinedMask;
+  masked.style.webkitMaskImage = combinedMask;
+  masked.style.maskComposite = 'intersect';
+  masked.style.webkitMaskComposite = 'source-in';
+
+  document.getElementById('codeOut').innerHTML =
+`.masked {
+  width: <span class="val-c">100%</span>;
+  height: <span class="val-c">${height}px</span>;
+
+  background-image:
+    <span class="fn">repeating-linear-gradient</span>(
+      to right,
+      <span class="str">${color}</span> 0px, <span class="str">${color}</span> <span class="val-c">${dotSize}px</span>,
+      transparent <span class="val-c">${dotSize}px</span>, transparent <span class="val-c">${step}px</span>
+    );
+  background-size: <span class="val-c">${step}px ${step}px</span>;
+
+  mask-image:
+    <span class="fn">repeating-linear-gradient</span>(
+      to bottom,
+      black 0px, black <span class="val-c">${dotSize}px</span>,
+      transparent <span class="val-c">${dotSize}px</span>, transparent <span class="val-c">${step}px</span>
+    ),
+    <span class="fn">radial-gradient</span>(
+      ellipse <span class="val-c">${rx}%</span> <span class="val-c">${ry}%</span> at <span class="val-c">${cx}%</span> <span class="val-c">${cy}%</span>,
+      black <span class="val-c">${fadeStart}%</span>, transparent <span class="val-c">${fadeEnd}%</span>
+    );
+
+  mask-composite: <span class="kw">intersect</span>;
+  -webkit-mask-composite: <span class="kw">source-in</span>;
+}`;
+}
+
+ids.forEach(id => els[id].addEventListener('input', update));
+update();
+
+// --- Saved configs (localStorage) ---
+
+const STORAGE_KEY = 'ellipse-mask-configs';
+
+function getSaved() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+}
+
+function putSaved(configs) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(configs));
+}
+
+let lastLoadedName = 'ellipse-mask';
+
+function applyConfig(config, name) {
+  if (name) lastLoadedName = name;
+  const map = {
+    dotSize: 'dotSize', gap: 'gap', color: 'dotColor', rows: 'rows',
+    rx: 'rx', ry: 'ry', cx: 'cx', cy: 'cy',
+    fadeStart: 'fadeStart', fadeEnd: 'fadeEnd', exportWidth: 'exportWidth'
+  };
+  Object.entries(map).forEach(([key, id]) => {
+    if (config[key] !== undefined && els[id]) els[id].value = config[key];
+  });
+  update();
+}
+
+function renderSavedList() {
+  const configs = getSaved();
+  const list = document.getElementById('savedList');
+  list.innerHTML = '';
+  Object.keys(configs).forEach(name => {
+    const item = document.createElement('div');
+    item.className = 'saved-item';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'saved-item-name';
+    nameEl.textContent = name;
+    nameEl.title = 'Load';
+    nameEl.addEventListener('click', () => applyConfig(configs[name], name));
+
+    const renameBtn = document.createElement('button');
+    renameBtn.className = 'saved-item-icon';
+    renameBtn.title = 'Rename';
+    renameBtn.textContent = '✎';
+    renameBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      startRename(item, name, configs[name]);
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'saved-item-del';
+    delBtn.title = 'Delete';
+    delBtn.textContent = '×';
+    delBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const all = getSaved();
+      delete all[name];
+      putSaved(all);
+      renderSavedList();
+    });
+
+    item.appendChild(nameEl);
+    item.appendChild(renameBtn);
+    item.appendChild(delBtn);
+    list.appendChild(item);
+  });
+}
+
+function startRename(item, oldName, config) {
+  item.innerHTML = '';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'saved-item-rename';
+  input.value = oldName;
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'saved-item-icon';
+  confirmBtn.title = 'Confirm';
+  confirmBtn.textContent = '✓';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'saved-item-del';
+  cancelBtn.title = 'Cancel';
+  cancelBtn.textContent = '×';
+
+  function commit() {
+    const newName = input.value.trim();
+    if (newName && newName !== oldName) {
+      const all = getSaved();
+      const reordered = {};
+      Object.keys(all).forEach(k => { reordered[k === oldName ? newName : k] = all[k]; });
+      putSaved(reordered);
+    }
+    renderSavedList();
+  }
+
+  confirmBtn.addEventListener('click', commit);
+  cancelBtn.addEventListener('click', renderSavedList);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') commit();
+    if (e.key === 'Escape') renderSavedList();
+  });
+
+  item.appendChild(input);
+  item.appendChild(confirmBtn);
+  item.appendChild(cancelBtn);
+  input.focus();
+  input.select();
+}
+
+document.getElementById('saveConfigBtn').addEventListener('click', () => {
+  const name = document.getElementById('configName').value.trim();
+  if (!name) return;
+  const all = getSaved();
+  all[name] = currentConfig();
+  putSaved(all);
+  renderSavedList();
+  document.getElementById('configName').value = '';
+});
+
+document.getElementById('configName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('saveConfigBtn').click();
+});
+
+renderSavedList();
+
+// --- Export ---
+
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const { dotSize, gap, color, rows, rx, ry, cx, cy, fadeStart, fadeEnd, exportWidth: screenWidth } = currentConfig();
+  const step = dotSize + gap;
+  const height = rows * step - gap;
+  const suggestedName = lastLoadedName.replace(/\.html$/i, '') + '.html';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${suggestedName.replace('.html', '')}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1a1a1a; }
+  .masked {
+    width: ${screenWidth}px;
+    height: ${height}px;
+    background-image:
+      repeating-linear-gradient(
+        to right,
+        ${color} 0px, ${color} ${dotSize}px,
+        transparent ${dotSize}px, transparent ${step}px
+      );
+    background-size: ${step}px ${step}px;
+    mask-image:
+      repeating-linear-gradient(
+        to bottom,
+        black 0px, black ${dotSize}px,
+        transparent ${dotSize}px, transparent ${step}px
+      ),
+      radial-gradient(
+        ellipse ${rx}% ${ry}% at ${cx}% ${cy}%,
+        black ${fadeStart}%, transparent ${fadeEnd}%
+      );
+    mask-composite: intersect;
+    -webkit-mask-composite: source-in;
+  }
+</style>
+</head>
+<body>
+<div class="masked"></div>
+</body>
+</html>`;
+
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName,
+        types: [{ description: 'HTML file', accept: { 'text/html': ['.html'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(html);
+      await writable.close();
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+
+  // fallback for browsers without showSaveFilePicker
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = suggestedName;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+</script>
+</body>
+</html>
