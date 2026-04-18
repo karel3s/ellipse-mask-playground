@@ -1,0 +1,58 @@
+{
+  "default": {
+    "dotSize": 7,
+    "gap": 7,
+    "color": "#ff9d25",
+    "rows": 4,
+    "opacity": 100,
+    "rx": 50,
+    "ry": 80,
+    "cx": 50,
+    "cy": 50,
+    "fadeStart": 40,
+    "fadeEnd": 100,
+    "exportWidth": 1140
+  },
+  "mobile": {
+    "dotSize": 7,
+    "gap": 7,
+    "color": "#ff9d25",
+    "rows": 5,
+    "opacity": 62,
+    "rx": 36,
+    "ry": 96,
+    "cx": 46,
+    "cy": 7,
+    "fadeStart": 29,
+    "fadeEnd": 100,
+    "exportWidth": 360
+  },
+  "tablet": {
+    "dotSize": 7,
+    "gap": 7,
+    "color": "#ff9d25",
+    "rows": 5,
+    "opacity": 76,
+    "rx": 37,
+    "ry": 96,
+    "cx": 46,
+    "cy": 7,
+    "fadeStart": 0,
+    "fadeEnd": 100,
+    "exportWidth": 780
+  },
+  "desktop": {
+    "dotSize": 7,
+    "gap": 7,
+    "color": "#ff9d25",
+    "rows": 4,
+    "opacity": 91,
+    "rx": 37,
+    "ry": 96,
+    "cx": 34,
+    "cy": 15,
+    "fadeStart": 0,
+    "fadeEnd": 100,
+    "exportWidth": 1140
+  }
+}

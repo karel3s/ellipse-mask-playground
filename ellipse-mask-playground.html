@@ -281,6 +281,11 @@
           <input type="range" id="rows" min="1" max="10" value="4" step="1">
           <span class="val" id="rowsVal">4</span>
         </div>
+        <div class="row">
+          <label>Opacity</label>
+          <input type="range" id="opacity" min="0" max="100" value="100" step="1">
+          <span class="val" id="opacityVal">100%</span>
+        </div>
       </div>
     </div>
 
@@ -340,6 +345,11 @@
           <button class="btn" id="saveConfigBtn">Save</button>
         </div>
         <div class="saved-list" id="savedList"></div>
+        <div class="save-row">
+          <button class="btn" id="exportConfigsBtn">Export JSON</button>
+          <button class="btn" id="importConfigsBtn">Import JSON</button>
+          <input type="file" id="importConfigsInput" accept=".json" style="display:none">
+        </div>
       </div>
     </div>
 
@@ -384,7 +394,7 @@
 </div>
 
 <script>
-const ids = ['dotSize','gap','dotColor','rows','rx','ry','cx','cy','fadeStart','fadeEnd','exportWidth'];
+const ids = ['dotSize','gap','dotColor','rows','opacity','rx','ry','cx','cy','fadeStart','fadeEnd','exportWidth'];
 const els = {};
 ids.forEach(id => els[id] = document.getElementById(id));
 
@@ -396,6 +406,7 @@ function currentConfig() {
     gap: parseInt(v('gap')),
     color: v('dotColor'),
     rows: parseInt(v('rows')),
+    opacity: parseInt(v('opacity')),
     rx: parseInt(v('rx')),
     ry: parseInt(v('ry')),
     cx: parseInt(v('cx')),
@@ -407,7 +418,7 @@ function currentConfig() {
 }
 
 function update() {
-  const { dotSize, gap, color, rows, rx, ry, cx, cy, fadeStart, fadeEnd } = currentConfig();
+  const { dotSize, gap, color, rows, opacity, rx, ry, cx, cy, fadeStart, fadeEnd } = currentConfig();
   const step = dotSize + gap;
   const height = rows * step - gap;
 
@@ -415,6 +426,7 @@ function update() {
   document.getElementById('gapVal').textContent = gap + 'px';
   document.getElementById('dotColorVal').textContent = color;
   document.getElementById('rowsVal').textContent = rows;
+  document.getElementById('opacityVal').textContent = opacity + '%';
   document.getElementById('rxVal').textContent = rx + '%';
   document.getElementById('ryVal').textContent = ry + '%';
   document.getElementById('cxVal').textContent = cx + '%';
@@ -433,6 +445,7 @@ function update() {
   orig.style.backgroundSize = `${step}px ${step}px`;
   orig.style.maskImage = vGrad;
   orig.style.webkitMaskImage = vGrad;
+  orig.style.opacity = opacity / 100;
 
   const masked = document.getElementById('dotsMasked');
   masked.style.width = parseInt(v('exportWidth')) + 'px';
@@ -444,6 +457,7 @@ function update() {
   masked.style.webkitMaskImage = combinedMask;
   masked.style.maskComposite = 'intersect';
   masked.style.webkitMaskComposite = 'source-in';
+  masked.style.opacity = opacity / 100;
 
   document.getElementById('codeOut').innerHTML =
 `.masked {
@@ -470,23 +484,22 @@ function update() {
     );
 
   mask-composite: <span class="kw">intersect</span>;
-  -webkit-mask-composite: <span class="kw">source-in</span>;
+  -webkit-mask-composite: <span class="kw">source-in</span>;${opacity < 100 ? `
+  opacity: <span class="val-c">${opacity / 100}</span>;` : ''}
 }`;
 }
 
 ids.forEach(id => els[id].addEventListener('input', update));
 update();
 
-// --- Saved configs (localStorage) ---
-
-const STORAGE_KEY = 'ellipse-mask-configs';
+// --- Saved configs (localStorage, with JSON export/import for git) ---
 
 function getSaved() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+  try { return JSON.parse(localStorage.getItem('ellipse-mask-configs')) || {}; } catch { return {}; }
 }
 
 function putSaved(configs) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(configs));
+  localStorage.setItem('ellipse-mask-configs', JSON.stringify(configs));
 }
 
 let lastLoadedName = 'ellipse-mask';
@@ -494,7 +507,7 @@ let lastLoadedName = 'ellipse-mask';
 function applyConfig(config, name) {
   if (name) lastLoadedName = name;
   const map = {
-    dotSize: 'dotSize', gap: 'gap', color: 'dotColor', rows: 'rows',
+    dotSize: 'dotSize', gap: 'gap', color: 'dotColor', rows: 'rows', opacity: 'opacity',
     rx: 'rx', ry: 'ry', cx: 'cx', cy: 'cy',
     fadeStart: 'fadeStart', fadeEnd: 'fadeEnd', exportWidth: 'exportWidth'
   };
@@ -605,10 +618,38 @@ document.getElementById('configName').addEventListener('keydown', e => {
 
 renderSavedList();
 
+document.getElementById('exportConfigsBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(getSaved(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ellipse-mask-configs.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('importConfigsBtn').addEventListener('click', () => {
+  document.getElementById('importConfigsInput').click();
+});
+
+document.getElementById('importConfigsInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const configs = JSON.parse(ev.target.result);
+      putSaved(configs);
+      renderSavedList();
+    } catch { alert('Invalid JSON file.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
 // --- Export ---
 
 document.getElementById('exportBtn').addEventListener('click', async () => {
-  const { dotSize, gap, color, rows, rx, ry, cx, cy, fadeStart, fadeEnd, exportWidth: screenWidth } = currentConfig();
+  const { dotSize, gap, color, rows, opacity, rx, ry, cx, cy, fadeStart, fadeEnd, exportWidth: screenWidth } = currentConfig();
   const step = dotSize + gap;
   const height = rows * step - gap;
   const suggestedName = lastLoadedName.replace(/\.html$/i, '') + '.html';
@@ -643,7 +684,8 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
         black ${fadeStart}%, transparent ${fadeEnd}%
       );
     mask-composite: intersect;
-    -webkit-mask-composite: source-in;
+    -webkit-mask-composite: source-in;${opacity < 100 ? `
+    opacity: ${opacity / 100};` : ''}
   }
 </style>
 </head>

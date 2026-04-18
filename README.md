@@ -36,20 +36,22 @@ Open `ellipse-mask-playground.html` directly in a browser — no build step or s
 
 | Section | Controls |
 |---|---|
-| Dot grid | Dot size, gap, colour, number of rows |
+| Dot grid | Dot size, gap, colour, number of rows, opacity |
 | Ellipse shape | Width (rx), height (ry), center X/Y |
 | Fade | Solid core radius, fade-out end |
-| Configs | Save, load, rename and delete named configurations (persisted in `localStorage`) |
+| Configs | Save, load, rename and delete named configurations |
 | Export | Screen width slider + Download HTML |
 
 ### Configs
 
 Type a name and click **Save** (or press Enter) to store the current settings. Saved configs appear as a list — click a name to load it, click **✎** to rename inline, click **×** to delete.
 
+Configs are persisted in `localStorage` and survive page reloads.
+
+Configs are placed manually in the `configs/`folder. Load a config via **Import JSON**. To save updated configs, use **Export JSON** and move the downloaded file into `configs/` manually.
+
 ### Exporting
 
-Set the target screen width with the slider, then click **Download HTML**. A native Save As dialog opens with the filename pre-filled from the loaded config name. Save the file into the `output/` folder.
+Set the target screen width with the slider, then click **Download HTML**. A native Save As dialog opens with the filename pre-filled from the loaded config name.
 
-## Output
-
-Exported files go in `output/`. Each file is a standalone HTML snippet containing only the `.masked` div and its CSS.
+`output/` contains manually exported examples — it is not a build artifact.
