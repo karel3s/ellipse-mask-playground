@@ -420,7 +420,7 @@ function currentConfig() {
 function update() {
   const { dotSize, gap, color, rows, opacity, rx, ry, cx, cy, fadeStart, fadeEnd } = currentConfig();
   const step = dotSize + gap;
-  const height = rows * step - gap;
+  const height = rows * step;
 
   document.getElementById('dotSizeVal').textContent = dotSize + 'px';
   document.getElementById('gapVal').textContent = gap + 'px';
@@ -443,8 +443,11 @@ function update() {
   orig.style.height = height + 'px';
   orig.style.backgroundImage = hGrad;
   orig.style.backgroundSize = `${step}px ${step}px`;
+  orig.style.backgroundPositionY = gap + 'px';
   orig.style.maskImage = vGrad;
   orig.style.webkitMaskImage = vGrad;
+  orig.style.maskPosition = `0px ${gap}px`;
+  orig.style.webkitMaskPosition = `0px ${gap}px`;
   orig.style.opacity = opacity / 100;
 
   const masked = document.getElementById('dotsMasked');
@@ -452,9 +455,12 @@ function update() {
   masked.style.height = height + 'px';
   masked.style.backgroundImage = hGrad;
   masked.style.backgroundSize = `${step}px ${step}px`;
+  masked.style.backgroundPositionY = gap + 'px';
   const combinedMask = `${vGrad}, ${ellipseGrad}`;
   masked.style.maskImage = combinedMask;
   masked.style.webkitMaskImage = combinedMask;
+  masked.style.maskPosition = `0px ${gap}px, 0% 0%`;
+  masked.style.webkitMaskPosition = `0px ${gap}px, 0% 0%`;
   masked.style.maskComposite = 'intersect';
   masked.style.webkitMaskComposite = 'source-in';
   masked.style.opacity = opacity / 100;
@@ -471,6 +477,7 @@ function update() {
       transparent <span class="val-c">${dotSize}px</span>, transparent <span class="val-c">${step}px</span>
     );
   background-size: <span class="val-c">${step}px ${step}px</span>;
+  background-position: <span class="val-c">0px ${gap}px</span>;
 
   mask-image:
     <span class="fn">repeating-linear-gradient</span>(
@@ -483,6 +490,7 @@ function update() {
       black <span class="val-c">${fadeStart}%</span>, transparent <span class="val-c">${fadeEnd}%</span>
     );
 
+  mask-position: <span class="val-c">0px ${gap}px</span>, <span class="val-c">0% 0%</span>;
   mask-composite: <span class="kw">intersect</span>;
   -webkit-mask-composite: <span class="kw">source-in</span>;${opacity < 100 ? `
   opacity: <span class="val-c">${opacity / 100}</span>;` : ''}
@@ -651,7 +659,7 @@ document.getElementById('importConfigsInput').addEventListener('change', e => {
 document.getElementById('exportBtn').addEventListener('click', async () => {
   const { dotSize, gap, color, rows, opacity, rx, ry, cx, cy, fadeStart, fadeEnd, exportWidth: screenWidth } = currentConfig();
   const step = dotSize + gap;
-  const height = rows * step - gap;
+  const height = rows * step;
   const suggestedName = lastLoadedName.replace(/\.html$/i, '') + '.html';
 
   const html = `<!DOCTYPE html>
@@ -673,6 +681,7 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
         transparent ${dotSize}px, transparent ${step}px
       );
     background-size: ${step}px ${step}px;
+    background-position: 0px ${gap}px;
     mask-image:
       repeating-linear-gradient(
         to bottom,
@@ -683,6 +692,7 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
         ellipse ${rx}% ${ry}% at ${cx}% ${cy}%,
         black ${fadeStart}%, transparent ${fadeEnd}%
       );
+    mask-position: 0px ${gap}px, 0% 0%;
     mask-composite: intersect;
     -webkit-mask-composite: source-in;${opacity < 100 ? `
     opacity: ${opacity / 100};` : ''}
